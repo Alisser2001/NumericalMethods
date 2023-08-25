@@ -27,15 +27,14 @@ def CuadraticInterpolation(f, x0, x1, x2, stopCri, count):
     y3 = f(x3)
     err = getErr(x1, x3)
     print("{:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30}".format(count, x0, x1, x2, x3, y0, y1, y2, y3, err))
-
+    if y3 == y1 or err < stopCri:
+        return [x3, y3]
     if y3 > y1:
         count += 1
         return CuadraticInterpolation(f, x1, x3, x2, stopCri, count)
     if y3 < y1:
         count += 1
         return CuadraticInterpolation(f, x0, x3, x1, stopCri, count)
-    if y3 == y1 or err < stopCri:
-        return y3
 
 
 print("")
@@ -52,18 +51,18 @@ print("{:^60}".format("Método de la Interpolación Cuadrática"))
 print("")
 print("{:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30}".format("i", "x0", "x1", "x2", "x3", "f(x0)", "f(x1)", "f(x2)", "f(x3)", "Error"))
 max = CuadraticInterpolation(f, x0, x1, x2, stopCri, count)
-print("Raíz: " + str(max))
+print("Máximo: " + str(max[1]))
 
-xpts = np.linspace(x0, x2)
+xpts = np.linspace(x0-10, x2+10)
 plt.plot(xpts, f(xpts))
 plt.title("Gráfica de la función " + str(fn))
 plt.axhline(color="black")
 plt.axvline(color="black")
-plt.scatter(max, 0, c="red")
+plt.scatter(max[0], max[1], c="red")
 plt.scatter(x0, 0, c="blue")
 plt.scatter(x1, 0, c="blue")
 plt.scatter(x2, 0, c="blue")
-plt.annotate(round(max, 9), xy=(max, 0.5))
+plt.annotate(round(max[1], 9), xy=(max[0], max[1]))
 plt.annotate(round(x0, 9), xy=(x0, 0.5))
 plt.annotate(round(x1, 9), xy=(x1, 0.5))
 plt.annotate(round(x2, 9), xy=(x2, 0.5))
