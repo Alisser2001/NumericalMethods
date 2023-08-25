@@ -5,26 +5,26 @@ from sympy import symbols
 from sympy import lambdify
 
 
-def fxr(xl, xu):
-    return (xl+xu)/2
+def fxr(xl, xu, yl, yu):
+    return (xu - ((yu*(xl-xu))/(yl-yu)))
 
 
 def getErr(xl, xu):
     return abs(xu - xl)
 
 
-def BisectionMethod(f, xl, xu, stopCri, count):
-        xr = fxr(xl, xu)
+def FakePosition(f, xl, xu, stopCri, count):
+        xr = fxr(xl, xu, f(xl), f(xu))
         err = getErr(xl, xu)
         print("{:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30}".format(count, xu, xl, xr, f(xu), f(xl), f(xr), round(err, 7)))
         if f(xl)*f(xr) == 0 or err < stopCri:
             return xr
         if f(xl)*f(xr) < 0:
             count += 1
-            return BisectionMethod(f, xl, xr, stopCri, count)
+            return FakePosition(f, xl, xr, stopCri, count)
         if f(xl)*f(xr) > 0:
             count += 1
-            return BisectionMethod(f, xr, xu, stopCri, count)
+            return FakePosition(f, xr, xu, stopCri, count)
 
 
 print("")
@@ -39,7 +39,7 @@ print("")
 print("{:^60}".format("Método de la Bisección"))
 print("")
 print("{:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30}".format("i", "xu", "xl", "xr", "f(xu)", "f(xl)", "f(xr)", "Error"))
-root = BisectionMethod(f, xl, xu, stopCri, count)
+root = FakePosition(f, xl, xu, stopCri, count)
 print("Raíz: " + str(root))
 
 xpts = np.linspace(xl-10, xu+10)
