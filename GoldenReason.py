@@ -17,20 +17,21 @@ def fx2(d, xu):
 def getErr(x1, x2):
     return abs(x2 - x1)
 
-def GoldenReason(f, xl, xu, stopCri, count):
-        d = fd(xl, xu)
-        x1 = fx1(d, xl)
-        x2 = fx2(d, xu)
-        err = getErr(x1, x2)
-        print("{:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30}".format(count, xu, xl, d, x1, x2, f(xu), f(xl), f(x1), f(x2), round(err, 7)))
-        if f(x2) == f(x1) or err < stopCri:
-            return [x1, f(x1)]
-        if f(x2) > f(x1):
-            count += 1
-            return GoldenReason(f, xl, x1, stopCri, count)
-        if f(x2) < f(x1):
-            count += 1
-            return GoldenReason(f, x2, xu, stopCri, count)
+def GoldenReason(f, xl, xu, stopCri, count, errList):
+    d = fd(xl, xu)
+    x1 = fx1(d, xl)
+    x2 = fx2(d, xu)
+    err = getErr(x1, x2)
+    errList.append(err)
+    print("{:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30}".format(count, xu, xl, d, x1, x2, f(xu), f(xl), f(x1), f(x2), round(err, 7)))
+    if f(x2) == f(x1) or err < stopCri:
+        return [x1, f(x1)], errList, count
+    if f(x2) > f(x1):
+        count += 1
+        return GoldenReason(f, xl, x1, stopCri, count, errList)
+    if f(x2) < f(x1):
+        count += 1
+        return GoldenReason(f, x2, xu, stopCri, count, errList)
 
 def Solution():
     print("")
@@ -45,8 +46,25 @@ def Solution():
     print("{:^60}".format("Método de la Bisección"))
     print("")
     print("{:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30}".format("i", "xu", "xl", "d", "x1", "x2", "f(xu)", "f(xl)", "f(x1)", "f(x2)", "Error"))
-    max = GoldenReason(f, xl, xu, stopCri, count)
-    print("Máximo: " + str(max[1]))
+
+    # Grafica del error
+    plt.figure(figsize=(8, 6))
+    plt.title("Gráfica del Error")
+    plt.axhline(color="black")
+    plt.axvline(color="black")
+    errlist = []
+
+    max, err_list, c = GoldenReason(f, xl, xu, stopCri, count, errlist)
+    print("\nMáximo: " + str(max[1]))
+
+    plt.plot(range(0, c), err_list, c="red")
+    plt.xlabel("x")
+    plt.ylabel("Error: abs(x2-x1)")
+    plt.grid(True, which='both')
+    plt.show()
+
+    #Grafica de la función
+    plt.figure(figsize=(8, 6))
     xpts = np.linspace(xl-10, xu+10)
     plt.plot(xpts, f(xpts))
     plt.title("Gráfica de la función " + str(fn))

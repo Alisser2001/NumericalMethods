@@ -10,18 +10,19 @@ def fxr(xl, xu):
 def getErr(xl, xu):
     return abs(xu - xl)
 
-def BisectionMethod(f, xl, xu, stopCri, count):
+def BisectionMethod(f, xl, xu, stopCri, count, err_list):
         xr = fxr(xl, xu)
         err = getErr(xl, xu)
+        err_list.append(err)
         print("{:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30}".format(count, xu, xl, xr, f(xu), f(xl), f(xr), round(err, 7)))
         if f(xl)*f(xr) == 0 or err < stopCri:
-            return xr
+            return xr, err_list, count
         if f(xl)*f(xr) < 0:
             count += 1
-            return BisectionMethod(f, xl, xr, stopCri, count)
+            return BisectionMethod(f, xl, xr, stopCri, count, err_list)
         if f(xl)*f(xr) > 0:
             count += 1
-            return BisectionMethod(f, xr, xu, stopCri, count)
+            return BisectionMethod(f, xr, xu, stopCri, count, err_list)
 
 def Solution():
     print("")
@@ -36,8 +37,25 @@ def Solution():
     print("{:^60}".format("Método de la Bisección"))
     print("")
     print("{:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30}".format("i", "xu", "xl", "xr", "f(xu)", "f(xl)", "f(xr)", "Error"))
-    root = BisectionMethod(f, xl, xu, stopCri, count)
-    print("Raíz: " + str(root))
+
+    #Grafica del error
+    plt.figure(figsize=(8, 6))
+    plt.title("Gráfica del Error")
+    plt.axhline(color="black")
+    plt.axvline(color="black")
+    errlist = []
+
+    root, err_list, c = BisectionMethod(f, xl, xu, stopCri, count, errlist)
+    print("\nRaíz: " + str(root))
+
+    plt.plot(range(0, c), err_list, c="red")
+    plt.xlabel("x")
+    plt.ylabel("Error: abs(xu-xl)")
+    plt.grid(True, which='both')
+    plt.show()
+
+    #Grafica de la función
+    plt.figure(figsize=(8, 6))
     xpts = np.linspace(xl-10, xu+10)
     plt.plot(xpts, f(xpts))
     plt.title("Gráfica de la función " + str(fn))

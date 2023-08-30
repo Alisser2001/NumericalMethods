@@ -16,22 +16,23 @@ def x3Den(y0, y1, y2, x0, x1, x2):
 def fx3(y0, y1, y2, x0, x1, x2):
     return (x3Num(y0, y1, y2, x0, x1, x2)/x3Den(y0, y1, y2, x0, x1, x2))
 
-def CuadraticInterpolation(f, x0, x1, x2, stopCri, count):
+def CuadraticInterpolation(f, x0, x1, x2, stopCri, count, errList):
     y0 = f(x0)
     y1 = f(x1)
     y2 = f(x2)
     x3 = fx3(y0, y1, y2, x0, x1, x2)
     y3 = f(x3)
     err = getErr(x1, x3)
+    errList.append(err)
     print("{:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30}".format(count, x0, x1, x2, x3, y0, y1, y2, y3, err))
     if y3 == y1 or err < stopCri:
-        return [x3, y3]
+        return [x3, y3], errList, count
     if y3 > y1:
         count += 1
-        return CuadraticInterpolation(f, x1, x3, x2, stopCri, count)
+        return CuadraticInterpolation(f, x1, x3, x2, stopCri, count, errList)
     if y3 < y1:
         count += 1
-        return CuadraticInterpolation(f, x0, x3, x1, stopCri, count)
+        return CuadraticInterpolation(f, x0, x3, x1, stopCri, count, errList)
 
 def Solution():
     print("")
@@ -47,8 +48,25 @@ def Solution():
     print("{:^60}".format("Método de la Interpolación Cuadrática"))
     print("")
     print("{:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30}".format("i", "x0", "x1", "x2", "x3", "f(x0)", "f(x1)", "f(x2)", "f(x3)", "Error"))
-    max = CuadraticInterpolation(f, x0, x1, x2, stopCri, count)
-    print("Máximo: " + str(max[1]))
+
+    # Grafica del error
+    plt.figure(figsize=(8, 6))
+    plt.title("Gráfica del Error")
+    plt.axhline(color="black")
+    plt.axvline(color="black")
+    errlist = []
+
+    max, err_list, c = CuadraticInterpolation(f, x0, x1, x2, stopCri, count, errlist)
+    print("\nMáximo: " + str(max[1]))
+
+    plt.plot(range(0, c), err_list, c="red")
+    plt.xlabel("x")
+    plt.ylabel("Error: abs(x1-x3)")
+    plt.grid(True, which='both')
+    plt.show()
+
+    #Grafica de la función
+    plt.figure(figsize=(8, 6))
     xpts = np.linspace(x0-10, x2+10)
     plt.plot(xpts, f(xpts))
     plt.title("Gráfica de la función " + str(fn))

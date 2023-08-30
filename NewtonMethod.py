@@ -6,39 +6,71 @@ from sympy import symbols
 from sympy import lambdify
 
 def getError(x0, x1):
-    return np.abs(x1-x0)
+    return abs(x1-x0)
 
-def getRoot(f, fd, x0, stopCri, count):
+def getRoot(f, fd, x0, stopCri, count, errlistRoot):
     xa = x0
     xs = xa - (f(xa) / fd(xa))
     err = getError(xa, xs)
+    errlistRoot.append(err)
     print("{:^30} {:^30} {:^30} {:^30} {:^30}".format(count, xa, f(xa), fd(xa), err))
     if f(xs) != 0 and err > stopCri:
         count += 1
-        return getRoot(f, fd, xs, stopCri, count)
-    return xs
+        return getRoot(f, fd, xs, stopCri, count, errlistRoot)
+    return xs, errlistRoot, count
 
-def getMinOrMax(f, fd, fdd, x0, stopCri, count):
+def getMinOrMax(f, fd, fdd, x0, stopCri, count, errlistMax):
     xa = x0
     xs = xa - (fd(xa) / fdd(xa))
     err = getError(xa, xs)
+    errlistMax.append(err)
     print("{:^30} {:^30} {:^30} {:^30} {:^30} {:^30}".format(count, xa, f(xa), fd(xa), fdd(xa), err))
     if err > stopCri:
         count += 1
-        return getMinOrMax(f, fd, fdd, xs, stopCri, count)
-    return xs, f(xs)
+        return getMinOrMax(f, fd, fdd, xs, stopCri, count, errlistMax)
+    return xs, f(xs), errlistMax, count
 
 def NewtonMethod(f, fd, fdd, x0, stopCri, count):
     print("")
     print("{:^60}".format("Método de Newton Para la Raíz"))
     print("")
     print("{:^30} {:^30} {:^30} {:^30} {:^30}".format("i", "x", "f(x)", "f'(x)", "Error"))
-    root = getRoot(f, fd, x0, stopCri, count)
+
+    # Grafica del error de la raiz
+    plt.figure(figsize=(8, 6))
+    plt.title("Gráfica del Error para la Raíz")
+    plt.axhline(color="black")
+    plt.axvline(color="black")
+    errlistRoot = []
+
+    root, err_list_root, cr = getRoot(f, fd, x0, stopCri, count, errlistRoot)
+
+    plt.plot(range(0, cr), err_list_root, c="red")
+    plt.xlabel("x")
+    plt.ylabel("Error: abs(x1-x0)")
+    plt.grid(True, which='both')
+    plt.show()
+
     print("\n")
     print("{:^60}".format("Método de Newton Para Mín o Máx"))
     print("")
     print("{:^30} {:^30} {:^30} {:^30} {:^30} {:^30}".format("i", "x", "f(x)", "f'(x)", "f''(x)", "Error"))
-    xs, ys = getMinOrMax(f, fd, fdd, x0, stopCri, count)
+
+    # Grafica del error para el máximo
+    plt.figure(figsize=(8, 6))
+    plt.title("Gráfica del Error para el máximo o mínimo")
+    plt.axhline(color="black")
+    plt.axvline(color="black")
+    errlistMax = []
+
+    xs, ys, err_list_max, cm = getMinOrMax(f, fd, fdd, x0, stopCri, count, errlistMax)
+
+    plt.plot(range(0, cm), err_list_max, c="red")
+    plt.xlabel("x")
+    plt.ylabel("Error: abs(x1-x0)")
+    plt.grid(True, which='both')
+    plt.show()
+
     return root, xs, ys
 
 def Solution():
@@ -59,6 +91,7 @@ def Solution():
     print(result + " en: " + "(" + str(xs) + ", " + str(ys) + ")")
     xl = xs if xs < root else root
     xu = xs if xs > root else root
+    plt.figure(figsize=(8, 6))
     xpts = np.linspace(xl - 10, xu + 10)
     plt.plot(xpts, f(xpts))
     plt.title("Gráfica de la función " + str(fn))
@@ -75,3 +108,6 @@ def Solution():
     plt.show()
 
 Solution()
+
+#5 preguntas como si estuvieramos entrevistando al profesor
+#Describir al profesor de cada materia que estamos viendo

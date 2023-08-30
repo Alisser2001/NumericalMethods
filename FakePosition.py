@@ -6,21 +6,22 @@ from sympy import lambdify
 def fxr(xl, xu, yl, yu):
     return (xu - ((yu*(xl-xu))/(yl-yu)))
 
-def getErr(xl, xu):
-    return abs(xu - xl)
+def getErr(xu, xr):
+    return abs(xu - xr)
 
-def FakePosition(f, xl, xu, stopCri, count):
+def FakePosition(f, xl, xu, stopCri, count, errList):
         xr = fxr(xl, xu, f(xl), f(xu))
-        err = getErr(xl, xu)
+        err = getErr(xu, xr)
+        errList.append(err)
         print("{:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30}".format(count, xu, xl, xr, f(xu), f(xl), f(xr), round(err, 7)))
         if f(xl)*f(xr) == 0 or err < stopCri:
-            return xr
+            return xr, errList, count
         if f(xl)*f(xr) < 0:
             count += 1
-            return FakePosition(f, xl, xr, stopCri, count)
+            return FakePosition(f, xl, xr, stopCri, count, errList)
         if f(xl)*f(xr) > 0:
             count += 1
-            return FakePosition(f, xr, xu, stopCri, count)
+            return FakePosition(f, xr, xu, stopCri, count, errList)
 
 def Solution():
     print("")
@@ -35,8 +36,24 @@ def Solution():
     print("{:^60}".format("Método de la Bisección"))
     print("")
     print("{:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30}".format("i", "xu", "xl", "xr", "f(xu)", "f(xl)", "f(xr)", "Error"))
-    root = FakePosition(f, xl, xu, stopCri, count)
-    print("Raíz: " + str(root))
+
+    # Grafica del error
+    plt.figure(figsize=(8, 6))
+    plt.title("Gráfica del Error")
+    plt.axhline(color="black")
+    plt.axvline(color="black")
+    errlist = []
+
+    root, err_list, c = FakePosition(f, xl, xu, stopCri, count, errlist)
+    print("\nRaíz: " + str(root))
+
+    plt.plot(range(0, c), err_list, c="red")
+    plt.xlabel("x")
+    plt.ylabel("Error: abs(xu-xr)")
+    plt.grid(True, which='both')
+    plt.show()
+
+    #Grafica de la función
     xpts = np.linspace(xl-10, xu+10)
     plt.plot(xpts, f(xpts))
     plt.title("Gráfica de la función " + str(fn))
