@@ -2,17 +2,35 @@ import numpy as np
 import scipy as sp
 from tabulate import tabulate
 
+# Se aprovechó el poder de las librerías de Python para permitir al usuario ingresar la factorización
+# PA=LU o para calcularla automáticamente con scipy.linalg.lu(A).
+# También se usaron estas librerías para calcular el valor de las matrices U', D y las matrices V, Vt de la
+# factorización de Cholesky.
+# Los métodos necesarios para la solución del SEL, como la multiplicación PB, la solución del sistema
+# LC=PB y la solución del sistema UX=C fueron realizados sin utilizar librerías dedicadas, aunque al
+# principio de cada método está comentada la posible solución usando numpy.
+# Cada proceso dentro del algoritmo está descrito en su propia función, la función 'Solution' se encarga
+# de invocar dichas funciones en su orden y hallar la solución, además de armar la tabla de valores que se
+# muestra por consola luego de ingresar los datos; por otra parte, 'UserInfo' se encarga de pedir la info al usuario.
+
+
+# Solución a UX=C
 def AlgorithmSEL(U, C):
+    # Solución usando numpy:
     # np.ravel(np.linalg.solve(U, C))
+
     n = len(C)
     X = np.zeros((n, 1))
     for i in range(n - 1, -1, -1):
         X[i][0] = (C[i][0] - sum(U[i][j] * X[j][0] for j in range(i + 1, n))) / U[i][i]
-    result = ["X" + str(np.where(X == value)[0][0]+1) + ": " + str(round(value)) for value in np.ravel(X)]
+    result = ["X" + str(np.where(X == value)[0][0]+1) + ": " + str(value) for value in np.ravel(X)]
     return np.ravel(result)
 
+# Solución a PB
 def AlgorithmPB(P, B):
-    #np.dot(P, B)
+    # Solución usando numpy:
+    # np.dot(P, B)
+
     filasP = len(P)
     columnasP = len(P[0])
     filasB = len(B)
@@ -27,32 +45,41 @@ def AlgorithmPB(P, B):
     else:
         return PB
 
+# Solución a LC=PB
 def AlgorithmC(L, PB):
-    #np.linalg.solve(L, PB)
+    # Solución usando numpy:
+    # np.linalg.solve(L, PB)
+
     n = len(PB)
     C = np.zeros((n, 1))
     for i in range(n):
         C[i][0] = (PB[i][0] - sum(L[i][j] * C[j][0] for j in range(i))) / L[i][i]
     return C
 
+# Solución a L*Raiz(D) sólo si A es simétrica
 def AlgorithmCholesky(L, D):
     return np.dot(L, np.sqrt(D))
 
+# Se halla el valor de L si no se conoce
 def AlgotithmL(A):
     _, L, _ = sp.linalg.lu(A)
     return L
 
+# Se halla el valor de U si no se conoce
 def AlgotithmU(A):
     _, _, U = sp.linalg.lu(A)
     return U
 
+# Se halla el valor de P si no se conoce
 def AlgotithmP(A):
     P, _, _ = sp.linalg.lu(A)
     return P
 
+# Se halla el valor de U' sólo si A es simétrica
 def AlgotithmUp(L):
     return L.T
 
+# Se halla el valor de D
 def AlgorithmD(U):
     return np.diag(np.diag(U))
 

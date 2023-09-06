@@ -108,6 +108,3 @@ def Solution():
     plt.show()
 
 Solution()
-
-#5 preguntas como si estuvieramos entrevistando al profesor
-#Describir al profesor de cada materia que estamos viendo
