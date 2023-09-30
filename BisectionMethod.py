@@ -15,7 +15,7 @@ def BisectionMethod(f, xl, xu, stopCri, count, err_list):
         err = getErr(xl, xu)
         err_list.append(err)
         print("{:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30}".format(count, xu, xl, xr, f(xu), f(xl), f(xr), round(err, 7)))
-        if f(xl)*f(xr) == 0 or err < stopCri:
+        if f(xl)*f(xr) == 0 or err < stopCri or count > 900:
             return xr, err_list, count
         if f(xl)*f(xr) < 0:
             count += 1

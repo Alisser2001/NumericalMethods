@@ -14,7 +14,7 @@ def FakePosition(f, xl, xu, stopCri, count, errList):
         err = getErr(xu, xr)
         errList.append(err)
         print("{:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30}".format(count, xu, xl, xr, f(xu), f(xl), f(xr), round(err, 7)))
-        if f(xl)*f(xr) == 0 or err < stopCri:
+        if f(xl)*f(xr) == 0 or err < stopCri or count > 900:
             return xr, errList, count
         if f(xl)*f(xr) < 0:
             count += 1
@@ -33,7 +33,7 @@ def Solution():
     stopCri = float(input('Ingresa el valor del críterio de tolerancia del error: '))
     count = 1
     print("")
-    print("{:^60}".format("Método de la Bisección"))
+    print("{:^60}".format("Método de la Falsa Posición"))
     print("")
     print("{:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30}".format("i", "xu", "xl", "xr", "f(xu)", "f(xl)", "f(xr)", "Error"))
 

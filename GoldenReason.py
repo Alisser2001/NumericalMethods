@@ -24,7 +24,7 @@ def GoldenReason(f, xl, xu, stopCri, count, errList):
     err = getErr(x1, x2)
     errList.append(err)
     print("{:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30}".format(count, xu, xl, d, x1, x2, f(xu), f(xl), f(x1), f(x2), round(err, 7)))
-    if f(x2) == f(x1) or err < stopCri:
+    if f(x2) == f(x1) or err < stopCri or count > 900:
         return [x1, f(x1)], errList, count
     if f(x2) > f(x1):
         count += 1
@@ -43,7 +43,7 @@ def Solution():
     stopCri = float(input('Ingresa el valor del críterio de tolerancia del error: '))
     count = 1
     print("")
-    print("{:^60}".format("Método de la Bisección"))
+    print("{:^60}".format("Método de la Razón Dorada"))
     print("")
     print("{:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30}".format("i", "xu", "xl", "d", "x1", "x2", "f(xu)", "f(xl)", "f(x1)", "f(x2)", "Error"))
 

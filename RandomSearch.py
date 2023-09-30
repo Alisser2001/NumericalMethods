@@ -24,7 +24,6 @@ def Solution():
     y = symbols('y')
     count = 1
     maxf = -1E9
-    print(maxf)
     fn = sympify(input('Ingresa la función: '))
     f = lambdify((x, y), fn)
     xl = float(input("Ingresa el valor de xl: "))

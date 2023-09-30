@@ -25,7 +25,7 @@ def CuadraticInterpolation(f, x0, x1, x2, stopCri, count, errList):
     err = getErr(x1, x3)
     errList.append(err)
     print("{:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30} {:^30}".format(count, x0, x1, x2, x3, y0, y1, y2, y3, err))
-    if y3 == y1 or err < stopCri:
+    if y3 == y1 or err < stopCri or count > 900:
         return [x3, y3], errList, count
     if y3 > y1:
         count += 1

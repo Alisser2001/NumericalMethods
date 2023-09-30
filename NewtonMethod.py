@@ -14,7 +14,7 @@ def getRoot(f, fd, x0, stopCri, count, errlistRoot):
     err = getError(xa, xs)
     errlistRoot.append(err)
     print("{:^30} {:^30} {:^30} {:^30} {:^30}".format(count, xa, f(xa), fd(xa), err))
-    if f(xs) != 0 and err > stopCri:
+    if f(xs) != 0 and err > stopCri and not count > 900:
         count += 1
         return getRoot(f, fd, xs, stopCri, count, errlistRoot)
     return xs, errlistRoot, count
@@ -25,7 +25,7 @@ def getMinOrMax(f, fd, fdd, x0, stopCri, count, errlistMax):
     err = getError(xa, xs)
     errlistMax.append(err)
     print("{:^30} {:^30} {:^30} {:^30} {:^30} {:^30}".format(count, xa, f(xa), fd(xa), fdd(xa), err))
-    if err > stopCri:
+    if err > stopCri and not count > 900:
         count += 1
         return getMinOrMax(f, fd, fdd, xs, stopCri, count, errlistMax)
     return xs, f(xs), errlistMax, count
