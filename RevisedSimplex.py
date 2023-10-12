@@ -1,8 +1,10 @@
+import numpy as np
+
 def Solution():
     print("")
     numVars = int(input("Ingrese la cantidad de variables de decisión del problema: "))
     numRest = int(input("Ingrese la cantidad de restricciones del problema: "))
-    obj = input("¿Cuál es el objetivo de la función (max - min)?: ")
+    obj = input("¿Cuál es el objetivo de la función (Max - Min)?: ")
     coefsZ = []
     for i in range(0, numVars):
         coef = float(input("Ingresa el valor del coeficiente de X" + str(i+1) + " en Z: "))
@@ -23,7 +25,7 @@ def Solution():
     right = []
     for i in range(0, numRest):
         val = float(input("Ingresa el valor al lado derecho de la restricción " + str(i+1) + ": "))
-        right.append(val)
+        right.append([val])
     Z = ""
     for i in range(0, len(coefsZ)):
         Z = Z + "(" + str(coefsZ[i]) + ")" + "X" + str(i+1) + (" + " if i < len(coefsZ) - 1 else "")
@@ -56,15 +58,18 @@ def Solution():
     C = coefsZ
     for i in range(0, slackVar):
         C.append(0)
-    B = []
+    V = []
     for i in range(0, len(right)):
-        B.append([right[i]])
+        V.append([right[i]])
     X = []
+    R = []
     for i in range(0, numVars):
         X.append(["X" + str(i+1)])
+        R.append("X" + str(i+1))
     for i in range(0, slackVar):
         X.append(["S" + str(i+1)])
-    P = [[] for _ in range(numVars)]
+        R.append("S" + str(i+1))
+    P = [[] for _ in range(0, numRest)]
     for i in range(0, len(coefsRest)):
         P[coefsRest[i][0]].append(coefsRest[i][2])
     for i in range(0, len(P)):
@@ -74,9 +79,22 @@ def Solution():
         if typeRest[i] == "<=":
             s[i] = 1
         P[i] = P[i] + s
-
-
-
-
+    print("\nC = ", C)
+    print("VB = ", V)
+    print("X = ", X)
+    print("P = ", P)
+    print(R, ">= 0")
+    Xs = [["S"+str(i+1)] for i in range(0, numRest)]
+    Cb = [0 for _ in range(0, numRest)]
+    B = [P[i][numVars:-1] + [P[i][-1]] for i in range(0, len(P))]
+    print("\nXs = ", Xs)
+    print("Cb = ", Cb)
+    print("B = \n", np.array(B))
+    BI = np.linalg.inv(np.array(B))
+    print("B^-1 = \n", BI)
+    Xb = np.dot(BI, np.array(right))
+    print("XB = ", Xb)
+    Zb = np.dot(np.array(Cb), Xb)
+    print("Zb = ", Zb)
 
 Solution()
