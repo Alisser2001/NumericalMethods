@@ -56,18 +56,15 @@ def Solution():
     for i in range(0, len(Rest)):
         print("Rest " + str(i + 1) + ": " + Rest[i])
     C = coefsZ
-    for i in range(0, slackVar):
-        C.append(0)
-    V = []
+    b = []
     for i in range(0, len(right)):
-        V.append([right[i]])
+        b.append(right[i])
     X = []
     R = []
     for i in range(0, numVars):
         X.append(["X" + str(i+1)])
         R.append("X" + str(i+1))
     for i in range(0, slackVar):
-        X.append(["S" + str(i+1)])
         R.append("S" + str(i+1))
     P = [[] for _ in range(0, numRest)]
     for i in range(0, len(coefsRest)):
@@ -79,22 +76,24 @@ def Solution():
         if typeRest[i] == "<=":
             s[i] = 1
         P[i] = P[i] + s
-    print("\nC = ", C)
-    print("VB = ", V)
-    print("X = ", X)
-    print("P = ", P)
-    print(R, ">= 0")
+    print("\nC = \n", np.array(C))
+    print("b = \n", np.array(b))
+    print("X = \n", np.array(X))
+    print("P = \n", np.array(P))
+    print(np.array(R), ">= 0")
     Xs = [["S"+str(i+1)] for i in range(0, numRest)]
+    Xb = [["X"+str(i+1)] for i in range(0, numRest)]
     Cb = [0 for _ in range(0, numRest)]
     B = [P[i][numVars:-1] + [P[i][-1]] for i in range(0, len(P))]
-    print("\nXs = ", Xs)
-    print("Cb = ", Cb)
+    print("\nXs = \n", np.array(Xs))
+    print("Xb = \n", np.array(Xb))
+    print("Cb = \n", np.array(Cb))
     print("B = \n", np.array(B))
     BI = np.linalg.inv(np.array(B))
-    print("B^-1 = \n", BI)
+    print("inv(B) = \n", BI)
     Xb = np.dot(BI, np.array(right))
-    print("XB = ", Xb)
+    print("Xb = \n", Xb)
     Zb = np.dot(np.array(Cb), Xb)
-    print("Zb = ", Zb)
+    print("Zb = \n", Zb)
 
 Solution()
