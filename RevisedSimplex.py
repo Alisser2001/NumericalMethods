@@ -1,4 +1,5 @@
 import numpy as np
+import copy
 from tabulate import tabulate
 
 def getZCoefs(numVars):
@@ -21,7 +22,7 @@ def getTypeRestric(numRest):
     typeRest = []
     slackVars = 0
     for i in range(0, numRest):
-        t = input("Ingresa el tipo de la restriccición " + str(i + 1) + " (>=, ==, <=): ")
+        t = input("Ingresa el tipo de la restriccición " + str(i + 1) + " (>=, <=): ")
         if t == "<=" or t == ">=":
             slackVars += 1
         typeRest.append(t)
@@ -118,32 +119,26 @@ def printMatricialModel(C, b, X, A, R, Xs, B):
     print("\nC = \n", np.array(C))
     print("\nb = \n", np.array(b))
     print("\nX = \n", np.array(X))
-    print("\nP = \n", np.array(A))
+    print("\nA = \n", np.array(A))
     print("\nXs = \n", np.array(Xs))
     print("\nB = \n", np.array(B))
     print("\n", np.array(R), ">= 0")
 
-def getXb(B, b):
-    return np.dot(np.linalg.inv(B), np.array(b))
-
-def printIteration(Cb, B, A, C, b, Zeros):
-    ops = [[0, 0, 0, 0], [0, 0, 0, 0]]
-    ops[0][0] = str(np.array([1]))
-    ops[0][1] = str(np.dot(np.dot(Cb, np.linalg.inv(B)), A)-C)
-    ops[0][2] = str(np.dot(Cb, np.linalg.inv(B)))
-    ops[0][3] = str(np.dot(np.dot(Cb, np.linalg.inv(B)), b))
-    ops[1][0] = str(Zeros)
-    ops[1][1] = str(np.dot(np.linalg.inv(B), A))
-    ops[1][2] = str(np.linalg.inv(B))
-    ops[1][3] = str(np.dot(np.linalg.inv(B), b))
-    print("\nZ = ", ops[0][3])
-    print("\n", tabulate(ops, headers=["Columna 1", "Columna 2", "Columna 3", "Columna 4"], tablefmt="grid"))
+def printIteration(ops):
+    thisOps = copy.deepcopy(ops)
+    for i in range(0, len(thisOps)):
+        for j in range(0, len(thisOps[i])):
+            thisOps[i][j] = str(thisOps[i][j])
+    print("Z = ", thisOps[0][3])
+    print("\n", tabulate(thisOps, headers=["Columna 1", "Columna 2", "Columna 3", "Columna 4"], tablefmt="grid"))
 
 def Solution():
     print("")
     numVars = int(input("Ingrese la cantidad de variables de decisión del problema: "))
     numRest = int(input("Ingrese la cantidad de restricciones del problema: "))
-    obj = input("¿Cuál es el objetivo de la función (Max - Min)?: ")
+    #obj = input("¿Cuál es el objetivo de la función (Max - Min)?: ")
+    obj = "Max"
+    print("Por el momento sólo para problemas de maximización")
     coefsZ = getZCoefs(numVars)
     coefsRest = getRestrictCoefs(numRest, numVars)
     typeRest, slackVars = getTypeRestric(numRest)
@@ -162,12 +157,92 @@ def Solution():
     b = getb(right)
     A = getA(numRest, coefsRest, slackVars, typeRest)
     Xs = [["S" + str(i + 1)] for i in range(0, numRest)]
-    B = getB(numRest, slackVars, typeRest)
+    B = np.array(getB(numRest, slackVars, typeRest))
     # Imprimimos nuestro modelo matricial aumentado
     printMatricialModel(C, b, X, A, R, Xs, B)
-    Xb = getXb(B, b)
-    Cb = [0 for _ in range(0, len(Xb))]
-    Zeros = [[0] for _ in range(0, numRest)]
-    printIteration(np.array(Cb), np.array(B), np.array(A), np.array(C), np.array(b), np.array(Zeros))
+    iterations(Aj=A, B=B, b=b, Cb=np.array([0 for _ in range(0, slackVars)]), Cj=C, numVars=numVars, slackVars=slackVars, numRest=numRest, obj=obj)
+
+
+def iterations(Aj, B, b, Cb, Cj, numVars, slackVars, numRest, obj, j=0):
+    Aj = np.array(Aj)
+    B = np.array(B)
+    b = np.array(b)
+    Cb = np.array(Cb)
+    Cj = np.array(Cj)
+    '''
+    if obj == "Min" or obj == "min":
+        Cj = (-1)*Cj
+    '''
+    Xj = ["X"+str(i+1) for i in range(0, numVars)]
+    Xb = ["S"+str(i+1) for i in range(0, slackVars)]
+    Zeros = np.array([[0] for _ in range(0, numRest)])
+    ops = [[0, 0, 0, 0], [0, 0, 0, 0]]
+    ops[0][0] = np.array([1])
+    ops[1][0] = Zeros
+    condition = True
+    ops[0][1] = np.dot(np.dot(Cb, np.linalg.inv(B)), Aj) - Cj
+    it = 0
+    while condition:
+        ops[0][1] = np.dot(np.dot(Cb, np.linalg.inv(B)), Aj) - Cj
+        ops[0][2] = np.dot(Cb, np.linalg.inv(B))
+        ops[0][3] = np.dot(np.dot(Cb, np.linalg.inv(B)), b)
+        ops[1][1] = np.dot(np.linalg.inv(B), Aj)
+        ops[1][2] = np.linalg.inv(B)
+        ops[1][3] = np.dot(np.linalg.inv(B), b)
+        printIteration(ops)
+        condition = False
+        if obj == "Max" or obj == "max":
+            elements = ops[0][1].tolist()
+            for e in elements:
+                e = float(e)
+                if e < 0:
+                    condition = True
+        if obj == "Min" or obj == "min":
+            elements = ops[1][3].tolist()
+            for e in elements:
+                e = float(e[0])
+                if e < 0:
+                    condition = True
+        if condition == False: break
+        j = np.argmin(np.dot(np.dot(Cb, np.linalg.inv(B)), Aj) - Cj)
+        pivot = []
+        for i in range(0, len(Aj[:, j])):
+                k = [Aj[:, j][i]]
+                pivot.append(k)
+        div_result = np.where(np.dot(np.linalg.inv(B), np.array(pivot)) > 0, np.dot(np.linalg.inv(B), b) / np.dot(np.linalg.inv(B), np.array(pivot)), np.inf)
+        outElement = np.argmin(div_result)
+        print("Iteration:", it+1)
+        print("In: ", Xj[j])
+        print("Out: ", Xb[outElement])
+        Xbpivot = Xb[outElement]
+        Xjpivot = Xj[j]
+        Xj[j] = Xbpivot
+        Xb[outElement] = Xjpivot
+        print("Xj =", Xj)
+        print("Xb =", Xb)
+        Cbpivot = Cb[outElement]
+        Cjpivot = Cj[j]
+        Cj[j] = Cbpivot
+        Cb[outElement] = Cjpivot
+        p1 = []
+        p2 = []
+        for i in range(0, len(Aj[:, j])):
+            k = [Aj[:, j][i]]
+            p1.append(k)
+        for i in range(0, len(B[:, outElement])):
+            k = [B[:, outElement][i]]
+            p2.append(k)
+        p1 = np.array(p1)
+        p2 = np.array(p2)
+        for i in range(0, len(Aj)):
+            Aj[i][j] = p2[i][0]
+        for i in range(0, len(B)):
+            B[i][outElement] = p1[i][0]
+        it += 1
+    for i in range(0, len(Xb)):
+        print(Xb[i], "=", ops[1][3][i][0])
+    for i in range(0, len(Xj)):
+        print(Xj[i], "=", ops[0][1][i])
+    print(obj, "Z = ", ops[0][3][0])
 
 Solution()
