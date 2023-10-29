@@ -15,7 +15,7 @@ def getRestrictCoefs(numRest, numVars):
         for j in range(0, numVars):
             coef = float(
                 input("Ingresa el valor del coeficiente de X" + str(j + 1) + " en la restricción " + str(i + 1) + ": "))
-            coefsRest.append((i, "X" + str(j + 1), coef))
+            coefsRest.append([i, "X" + str(j + 1), coef])
     return coefsRest
 
 def getTypeRestric(numRest):
@@ -117,21 +117,18 @@ def getB(numRest, slackVars, typeRest, artVars):
     return B
 
 def printMatricialModel(C, b, X, A, R, Xs, B):
-    print("\nC = \n", np.array(C))
-    print("\nb = \n", np.array(b))
-    print("\nX = \n", np.array(X))
-    print("\nA = \n", np.array(A))
-    print("\nXs = \n", np.array(Xs))
-    print("\nB = \n", np.array(B))
-    print("\n", np.array(R), ">= 0\n")
+    forPrint = [["C", "B", "b", "A", "X", "Xs"], [np.array(C), np.array(B), np.array(b), np.array(A), np.array(X), np.array(Xs)]]
+    for i in range(0, len(forPrint[1])):
+            forPrint[1][i] = str(forPrint[1][i])
+    print("\n", tabulate(forPrint, tablefmt="grid"))
+    print("\n", np.array(R), ">= 0")
 
 def printIteration(ops):
     thisOps = copy.deepcopy(ops)
     for i in range(0, len(thisOps)):
         for j in range(0, len(thisOps[i])):
             thisOps[i][j] = str(thisOps[i][j])
-    print("Z = ", thisOps[0][3])
-    print("\n", tabulate(thisOps, headers=["Columna 1", "Columna 2", "Columna 3", "Columna 4"], tablefmt="grid"))
+    print("\n", tabulate(thisOps, tablefmt="grid"))
 
 def Solution():
     print("\nCada variable, sea de holgura, exceso o artificial se añadirá a la ecuación con el prefijo S")
@@ -143,6 +140,17 @@ def Solution():
     coefsRest = getRestrictCoefs(numRest, numVars)
     typeRest, slackVars, artVars = getTypeRestric(numRest)
     right = getRightSide(numRest)
+    for i in range(0, len(right)):
+        if right[i][0] < 0:
+            if typeRest[i] == ">=":
+                typeRest[i] = "<="
+            if typeRest[i] == "<=":
+                typeRest[i] = ">="
+            for j in range(0, len(coefsRest)):
+                if coefsRest[j][0] == i:
+                    coefsRest[j][2] = (-1)*coefsRest[j][2]
+            right[i][0] = (-1)*right[i][0]
+
     Z = getZ(coefsZ)
     Rest = getRestrictions(numRest, coefsRest, numVars, typeRest, right)
     # Imprimimos la forma canónica del módelo
@@ -151,6 +159,14 @@ def Solution():
     estRest = getEstandarRestric(numRest, coefsRest, numVars, typeRest, right)
     # Imprimimos la forma estándar del módelo
     printEstandarModel(obj, estZ, estRest)
+    print(" ")
+    for i in range(0, len(typeRest)):
+        if typeRest[i] == ">=":
+            print("S" + str(i) + ": Variable de exceso.")
+        if typeRest[i] == "<=":
+            print("S" + str(i) + ": Variable de holgura.")
+        if typeRest[i] == "==":
+            print("S" + str(i) + ": Variable artificial.")
     # Empezamos a formar el módelo matricial
     C = coefsZ
     X, R = getXandR(numVars, slackVars, artVars)
