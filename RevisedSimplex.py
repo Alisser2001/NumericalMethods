@@ -21,12 +21,15 @@ def getRestrictCoefs(numRest, numVars):
 def getTypeRestric(numRest):
     typeRest = []
     slackVars = 0
+    artVars = 0
     for i in range(0, numRest):
-        t = input("Ingresa el tipo de la restriccición " + str(i + 1) + " (>=, <=): ")
+        t = input("Ingresa el tipo de la restriccición " + str(i + 1) + " (>=, ==, <=): ")
         if t == "<=" or t == ">=":
             slackVars += 1
+        if t == "==":
+            artVars += 1
         typeRest.append(t)
-    return typeRest, slackVars
+    return typeRest, slackVars, artVars
 
 def getRightSide(numRest):
     right = []
@@ -50,9 +53,9 @@ def getRestrictions(numRest, coefsRest, numVars, typeRest, right):
         Rest[i] = Rest[i] + " " + typeRest[i] + " " + str(right[i][0])
     return Rest
 
-def getEstandarZ(Z, slackVars):
+def getEstandarZ(Z, slackVars, artVars):
     estZ = Z
-    for i in range(0, slackVars):
+    for i in range(0, slackVars+artVars):
         estZ = estZ + " + (0)" + "S" + str(i+1)
     return estZ
 
@@ -64,7 +67,7 @@ def getEstandarRestric(numRest, coefsRest, numVars, typeRest, right):
     for i in range(0, len(estRest)):
         if typeRest[i] == ">=":
             estRest[i] = estRest[i] + " - (1.0)S" + str(i + 1)
-        if typeRest[i] == "<=":
+        if typeRest[i] == "<=" or typeRest[i] == "==":
             estRest[i] = estRest[i] + " + (1.0)S" + str(i + 1)
     for i in range(0, len(estRest)):
         estRest[i] = estRest[i] + " == " + str(right[i][0])
@@ -82,13 +85,13 @@ def printEstandarModel(obj, estZ, estRest):
     for i in range(0, len(estRest)):
         print("Rest " + str(i + 1) + ": " + estRest[i])
 
-def getXandR(numVars, slackVars):
+def getXandR(numVars, slackVars, artVars):
     X = []
     R = []
-    for i in range(0, numVars):
+    for i in range(0, numVars, artVars):
         X.append(["X" + str(i + 1)])
         R.append("X" + str(i + 1))
-    for i in range(0, slackVars):
+    for i in range(0, slackVars+artVars):
         R.append("S" + str(i + 1))
     return X, R
 
@@ -98,21 +101,19 @@ def getb(right):
         b.append(right[i])
     return b
 
-def getA(numRest, coefsRest, slackVars, typeRest):
+def getA(numRest, coefsRest):
     A = [[] for _ in range(0, numRest)]
     for i in range(0, len(coefsRest)):
         A[coefsRest[i][0]].append(coefsRest[i][2])
     return A
 
-def getB(numRest, slackVars, typeRest):
-    B = [[] for _ in range(0, numRest)]
+def getB(numRest, slackVars, typeRest, artVars):
+    B = np.array([[0 for _ in range(0, slackVars+artVars)] for _ in range(0, numRest)])
     for i in range(0, numRest):
-        s = [0 for _ in range(0, slackVars)]
         if typeRest[i] == ">=":
-            s[i] = -1
-        if typeRest[i] == "<=":
-            s[i] = 1
-        B[i] = B[i] + s
+            B[i][i] = -1
+        if typeRest[i] == "<=" or typeRest[i] == "==":
+            B[i][i] = 1
     return B
 
 def printMatricialModel(C, b, X, A, R, Xs, B):
@@ -122,7 +123,7 @@ def printMatricialModel(C, b, X, A, R, Xs, B):
     print("\nA = \n", np.array(A))
     print("\nXs = \n", np.array(Xs))
     print("\nB = \n", np.array(B))
-    print("\n", np.array(R), ">= 0")
+    print("\n", np.array(R), ">= 0\n")
 
 def printIteration(ops):
     thisOps = copy.deepcopy(ops)
@@ -133,48 +134,45 @@ def printIteration(ops):
     print("\n", tabulate(thisOps, headers=["Columna 1", "Columna 2", "Columna 3", "Columna 4"], tablefmt="grid"))
 
 def Solution():
-    print("")
+    print("\nCada variable, sea de holgura, exceso o artificial se añadirá a la ecuación con el prefijo S")
+    print("En el mismo orden que aparecen en las restricciones.\n")
     numVars = int(input("Ingrese la cantidad de variables de decisión del problema: "))
     numRest = int(input("Ingrese la cantidad de restricciones del problema: "))
-    #obj = input("¿Cuál es el objetivo de la función (Max - Min)?: ")
-    obj = "Max"
-    print("Por el momento sólo para problemas de maximización")
+    obj = input("¿Cuál es el objetivo de la función (Max - Min)?: ")
     coefsZ = getZCoefs(numVars)
     coefsRest = getRestrictCoefs(numRest, numVars)
-    typeRest, slackVars = getTypeRestric(numRest)
+    typeRest, slackVars, artVars = getTypeRestric(numRest)
     right = getRightSide(numRest)
     Z = getZ(coefsZ)
     Rest = getRestrictions(numRest, coefsRest, numVars, typeRest, right)
     # Imprimimos la forma canónica del módelo
     printCanonModel(obj, Z, Rest)
-    estZ = getEstandarZ(Z, slackVars)
+    estZ = getEstandarZ(Z, slackVars, artVars)
     estRest = getEstandarRestric(numRest, coefsRest, numVars, typeRest, right)
     # Imprimimos la forma estándar del módelo
     printEstandarModel(obj, estZ, estRest)
     # Empezamos a formar el módelo matricial
     C = coefsZ
-    X, R = getXandR(numVars, slackVars)
+    X, R = getXandR(numVars, slackVars, artVars)
     b = getb(right)
-    A = getA(numRest, coefsRest, slackVars, typeRest)
+    A = getA(numRest, coefsRest)
     Xs = [["S" + str(i + 1)] for i in range(0, numRest)]
-    B = np.array(getB(numRest, slackVars, typeRest))
+    B = np.array(getB(numRest, slackVars, typeRest, artVars))
     # Imprimimos nuestro modelo matricial aumentado
     printMatricialModel(C, b, X, A, R, Xs, B)
-    iterations(Aj=A, B=B, b=b, Cb=np.array([0 for _ in range(0, slackVars)]), Cj=C, numVars=numVars, slackVars=slackVars, numRest=numRest, obj=obj)
+    iterations(Aj=A, B=B, b=b, Cb=np.array([0 for _ in range(0, slackVars+artVars)]), Cj=C, numVars=numVars, artVars=artVars, slackVars=slackVars, numRest=numRest, obj=obj)
 
 
-def iterations(Aj, B, b, Cb, Cj, numVars, slackVars, numRest, obj, j=0):
+def iterations(Aj, B, b, Cb, Cj, numVars, slackVars, numRest, obj, artVars, j=0):
     Aj = np.array(Aj)
     B = np.array(B)
     b = np.array(b)
     Cb = np.array(Cb)
     Cj = np.array(Cj)
-    '''
     if obj == "Min" or obj == "min":
         Cj = (-1)*Cj
-    '''
     Xj = ["X"+str(i+1) for i in range(0, numVars)]
-    Xb = ["S"+str(i+1) for i in range(0, slackVars)]
+    Xb = ["S"+str(i+1) for i in range(0, slackVars+artVars)]
     Zeros = np.array([[0] for _ in range(0, numRest)])
     ops = [[0, 0, 0, 0], [0, 0, 0, 0]]
     ops[0][0] = np.array([1])
@@ -195,16 +193,16 @@ def iterations(Aj, B, b, Cb, Cj, numVars, slackVars, numRest, obj, j=0):
             elements = ops[0][1].tolist()
             for e in elements:
                 e = float(e)
-                if e < 0:
+                if e <= 0:
                     condition = True
         if obj == "Min" or obj == "min":
-            elements = ops[1][3].tolist()
+            elements = ops[0][1].tolist()
             for e in elements:
-                e = float(e[0])
-                if e < 0:
+                e = float(e)
+                if e >= 0:
                     condition = True
         if condition == False: break
-        j = np.argmin(np.dot(np.dot(Cb, np.linalg.inv(B)), Aj) - Cj)
+        j = np.argmin(np.dot(np.dot(Cb, np.linalg.inv(B)), Aj) - Cj) if obj=="Max" or obj=="max" else np.argmax(np.dot(np.dot(Cb, np.linalg.inv(B)), Aj) - Cj)
         pivot = []
         for i in range(0, len(Aj[:, j])):
                 k = [Aj[:, j][i]]
