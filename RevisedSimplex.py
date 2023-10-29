@@ -242,7 +242,7 @@ def iterations(Aj, B, b, Cb, Cj, numVars, slackVars, numRest, obj, j=0):
     for i in range(0, len(Xb)):
         print(Xb[i], "=", ops[1][3][i][0])
     for i in range(0, len(Xj)):
-        print(Xj[i], "=", ops[0][1][i])
+        print(Xj[i], "=", 0)
     print(obj, "Z = ", ops[0][3][0])
 
 Solution()
