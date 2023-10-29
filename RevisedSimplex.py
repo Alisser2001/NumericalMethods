@@ -181,6 +181,9 @@ def iterations(Aj, B, b, Cb, Cj, numVars, slackVars, numRest, obj, artVars, j=0)
     ops[0][1] = np.dot(np.dot(Cb, np.linalg.inv(B)), Aj) - Cj
     it = 0
     while condition:
+        if np.linalg.det(B) == 0:
+            print("El determinate de B es cero y no se puede seguir calculando su inversa.")
+            return
         ops[0][1] = np.dot(np.dot(Cb, np.linalg.inv(B)), Aj) - Cj
         ops[0][2] = np.dot(Cb, np.linalg.inv(B))
         ops[0][3] = np.dot(np.dot(Cb, np.linalg.inv(B)), b)
@@ -241,6 +244,6 @@ def iterations(Aj, B, b, Cb, Cj, numVars, slackVars, numRest, obj, artVars, j=0)
         print(Xb[i], "=", ops[1][3][i][0])
     for i in range(0, len(Xj)):
         print(Xj[i], "=", 0)
-    print(obj, "Z = ", ops[0][3][0])
+    print(obj, "Z = ", (ops[0][3][0] if obj=="Max" or obj=="max" else (-1)*ops[0][3][0]))
 
 Solution()
