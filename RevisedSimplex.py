@@ -31,11 +31,21 @@ def getTypeRestric(numRest):
         typeRest.append(t)
     return typeRest, slackVars, artVars
 
-def getRightSide(numRest):
+def getRightSide(numRest, typeRest, coefsRest):
     right = []
     for i in range(0, numRest):
         val = float(input("Ingresa el valor al lado derecho de la restricción " + str(i + 1) + ": "))
         right.append([val])
+    for i in range(0, len(right)):
+        if right[i][0] < 0:
+            if typeRest[i] == ">=":
+                typeRest[i] = "<="
+            if typeRest[i] == "<=":
+                typeRest[i] = ">="
+            for j in range(0, len(coefsRest)):
+                if coefsRest[j][0] == i:
+                    coefsRest[j][2] = (-1)*coefsRest[j][2]
+            right[i][0] = (-1)*right[i][0]
     return right
 
 def getZ(coefsZ):
@@ -79,16 +89,24 @@ def printCanonModel(obj, Z, Rest):
     for i in range(0, len(Rest)):
         print("Rest " + str(i + 1) + ": " + Rest[i])
 
-def printEstandarModel(obj, estZ, estRest):
+def printEstandarModel(obj, estZ, estRest, typeRest):
     print("\nForma estándar del módelo: \n")
     print(obj + " Z = " + estZ)
     for i in range(0, len(estRest)):
         print("Rest " + str(i + 1) + ": " + estRest[i])
+    print(" ")
+    for i in range(0, len(typeRest)):
+        if typeRest[i] == ">=":
+            print("S" + str(i) + ": Variable de exceso.")
+        if typeRest[i] == "<=":
+            print("S" + str(i) + ": Variable de holgura.")
+        if typeRest[i] == "==":
+            print("S" + str(i) + ": Variable artificial.")
 
 def getXandR(numVars, slackVars, artVars):
     X = []
     R = []
-    for i in range(0, numVars, artVars):
+    for i in range(0, numVars):
         X.append(["X" + str(i + 1)])
         R.append("X" + str(i + 1))
     for i in range(0, slackVars+artVars):
@@ -130,27 +148,76 @@ def printIteration(ops):
             thisOps[i][j] = str(thisOps[i][j])
     print("\n", tabulate(thisOps, tablefmt="grid"))
 
-def Solution():
+def infoRequest():
     print("\nCada variable, sea de holgura, exceso o artificial se añadirá a la ecuación con el prefijo S")
     print("En el mismo orden que aparecen en las restricciones.\n")
     numVars = int(input("Ingrese la cantidad de variables de decisión del problema: "))
     numRest = int(input("Ingrese la cantidad de restricciones del problema: "))
     obj = input("¿Cuál es el objetivo de la función (Max - Min)?: ")
+    return numVars, numRest, obj
+
+def orderInfo(Aj, B, b, Cb, Cj, obj, numVars, slackVars, artVars, numRest):
+    Aj = np.array(Aj)
+    B = np.array(B)
+    b = np.array(b)
+    Cb = np.array(Cb)
+    Cj = np.array(Cj)
+    if obj == "Min" or obj == "min":
+        Cj = (-1) * Cj
+    Xj = ["X" + str(i + 1) for i in range(0, numVars)]
+    Xb = ["S" + str(i + 1) for i in range(0, slackVars + artVars)]
+    Zeros = np.array([[0] for _ in range(0, numRest)])
+    return Aj, B, b, Cb, Cj, Xj, Xb, Zeros
+
+def getStatus(obj, ops):
+    condition = False
+    if obj == "Max" or obj == "max":
+        elements = ops[0][1].tolist()
+        for e in elements:
+            e = float(e)
+            if e <= 0:
+                condition = True
+    if obj == "Min" or obj == "min":
+        elements = ops[0][1].tolist()
+        for e in elements:
+            e = float(e)
+            if e >= 0:
+                condition = True
+    return condition
+
+def getInElement(obj, Cb, B, Aj, Cj):
+    result = 0
+    if obj == "Max" or obj == "max":
+        result = np.argmin(np.dot(np.dot(Cb, np.linalg.inv(B)), Aj) - Cj)
+    if obj == "Min" or obj == "min":
+        result = np.argmax(np.dot(np.dot(Cb, np.linalg.inv(B)), Aj) - Cj)
+    return result
+
+def getOutElement(Aj, j, B, b):
+    pivot = []
+    for i in range(0, len(Aj[:, j])):
+        k = [Aj[:, j][i]]
+        pivot.append(k)
+    div_result = np.where(np.dot(np.linalg.inv(B), np.array(pivot)) > 0,
+                              np.dot(np.linalg.inv(B), b) / np.dot(np.linalg.inv(B),
+                                                                   np.array(pivot)), np.inf)
+    outElement = np.argmin(div_result)
+    return outElement
+
+def printResult(Xb, ops, Xj, obj):
+    print("\nResultado: \n")
+    for i in range(0, len(Xb)):
+        print(Xb[i], "=", ops[1][3][i][0])
+    for i in range(0, len(Xj)):
+        print(Xj[i], "=", 0)
+    print(obj, "Z = ", (ops[0][3][0] if obj == "Max" or obj == "max" else (-1) * ops[0][3][0]))
+
+def Solution():
+    numVars, numRest, obj = infoRequest()
     coefsZ = getZCoefs(numVars)
     coefsRest = getRestrictCoefs(numRest, numVars)
     typeRest, slackVars, artVars = getTypeRestric(numRest)
-    right = getRightSide(numRest)
-    for i in range(0, len(right)):
-        if right[i][0] < 0:
-            if typeRest[i] == ">=":
-                typeRest[i] = "<="
-            if typeRest[i] == "<=":
-                typeRest[i] = ">="
-            for j in range(0, len(coefsRest)):
-                if coefsRest[j][0] == i:
-                    coefsRest[j][2] = (-1)*coefsRest[j][2]
-            right[i][0] = (-1)*right[i][0]
-
+    right = getRightSide(numRest, typeRest, coefsRest)
     Z = getZ(coefsZ)
     Rest = getRestrictions(numRest, coefsRest, numVars, typeRest, right)
     # Imprimimos la forma canónica del módelo
@@ -158,15 +225,7 @@ def Solution():
     estZ = getEstandarZ(Z, slackVars, artVars)
     estRest = getEstandarRestric(numRest, coefsRest, numVars, typeRest, right)
     # Imprimimos la forma estándar del módelo
-    printEstandarModel(obj, estZ, estRest)
-    print(" ")
-    for i in range(0, len(typeRest)):
-        if typeRest[i] == ">=":
-            print("S" + str(i) + ": Variable de exceso.")
-        if typeRest[i] == "<=":
-            print("S" + str(i) + ": Variable de holgura.")
-        if typeRest[i] == "==":
-            print("S" + str(i) + ": Variable artificial.")
+    printEstandarModel(obj, estZ, estRest, typeRest)
     # Empezamos a formar el módelo matricial
     C = coefsZ
     X, R = getXandR(numVars, slackVars, artVars)
@@ -176,20 +235,20 @@ def Solution():
     B = np.array(getB(numRest, slackVars, typeRest, artVars))
     # Imprimimos nuestro modelo matricial aumentado
     printMatricialModel(C, b, X, A, R, Xs, B)
-    iterations(Aj=A, B=B, b=b, Cb=np.array([0 for _ in range(0, slackVars+artVars)]), Cj=C, numVars=numVars, artVars=artVars, slackVars=slackVars, numRest=numRest, obj=obj)
+    iterations(Aj=A,
+                B=B,
+                b=b,
+                Cb=np.array([0 for _ in range(0, slackVars+artVars)]),
+                Cj=C,
+                numVars=numVars,
+                artVars=artVars,
+                slackVars=slackVars,
+                numRest=numRest,
+                obj=obj)
 
 
 def iterations(Aj, B, b, Cb, Cj, numVars, slackVars, numRest, obj, artVars, j=0):
-    Aj = np.array(Aj)
-    B = np.array(B)
-    b = np.array(b)
-    Cb = np.array(Cb)
-    Cj = np.array(Cj)
-    if obj == "Min" or obj == "min":
-        Cj = (-1)*Cj
-    Xj = ["X"+str(i+1) for i in range(0, numVars)]
-    Xb = ["S"+str(i+1) for i in range(0, slackVars+artVars)]
-    Zeros = np.array([[0] for _ in range(0, numRest)])
+    Aj, B, b, Cb, Cj, Xj, Xb, Zeros = orderInfo(Aj, B, b, Cb, Cj, obj, numVars, slackVars, artVars, numRest)
     ops = [[0, 0, 0, 0], [0, 0, 0, 0]]
     ops[0][0] = np.array([1])
     ops[1][0] = Zeros
@@ -207,27 +266,10 @@ def iterations(Aj, B, b, Cb, Cj, numVars, slackVars, numRest, obj, artVars, j=0)
         ops[1][2] = np.linalg.inv(B)
         ops[1][3] = np.dot(np.linalg.inv(B), b)
         printIteration(ops)
-        condition = False
-        if obj == "Max" or obj == "max":
-            elements = ops[0][1].tolist()
-            for e in elements:
-                e = float(e)
-                if e <= 0:
-                    condition = True
-        if obj == "Min" or obj == "min":
-            elements = ops[0][1].tolist()
-            for e in elements:
-                e = float(e)
-                if e >= 0:
-                    condition = True
+        condition = getStatus(obj, ops)
         if condition == False: break
-        j = np.argmin(np.dot(np.dot(Cb, np.linalg.inv(B)), Aj) - Cj) if obj=="Max" or obj=="max" else np.argmax(np.dot(np.dot(Cb, np.linalg.inv(B)), Aj) - Cj)
-        pivot = []
-        for i in range(0, len(Aj[:, j])):
-                k = [Aj[:, j][i]]
-                pivot.append(k)
-        div_result = np.where(np.dot(np.linalg.inv(B), np.array(pivot)) > 0, np.dot(np.linalg.inv(B), b) / np.dot(np.linalg.inv(B), np.array(pivot)), np.inf)
-        outElement = np.argmin(div_result)
+        j = getInElement(obj, Cb, B, Aj, Cj)
+        outElement = getOutElement(Aj, j, B, b)
         print("Iteration:", it+1)
         print("In: ", Xj[j])
         print("Out: ", Xb[outElement])
@@ -256,10 +298,6 @@ def iterations(Aj, B, b, Cb, Cj, numVars, slackVars, numRest, obj, artVars, j=0)
         for i in range(0, len(B)):
             B[i][outElement] = p1[i][0]
         it += 1
-    for i in range(0, len(Xb)):
-        print(Xb[i], "=", ops[1][3][i][0])
-    for i in range(0, len(Xj)):
-        print(Xj[i], "=", 0)
-    print(obj, "Z = ", (ops[0][3][0] if obj=="Max" or obj=="max" else (-1)*ops[0][3][0]))
+    printResult(Xb, ops, Xj, obj)
 
 Solution()
