@@ -149,9 +149,14 @@ def printIteration(ops):
     print("\n", tabulate(thisOps, tablefmt="grid"))
 
 def infoRequest():
-    print("\nCada variable, sea de holgura, exceso o artificial se añadirá a la ecuación con el prefijo S")
-    print("En el mismo orden que aparecen en las restricciones.\n")
-    numVars = int(input("Ingrese la cantidad de variables de decisión del problema: "))
+    print("\n- Cada variable, sea de holgura, exceso o artificial se añadirá a la ecuación con el prefijo S")
+    print("en el mismo orden que aparecen en las restricciones.")
+    print("- Si en algún momento la matriz B se vuelve tal qur no se pueda calcular su inversa")
+    print("el programa términa su ejecución.")
+    print("- En cada iteración, el programa mostrará una tabla con la siguiente estructura: \n")
+    ops = [["1", "Cb*inv(B)*A-C", "Cb*inv(B)", "Cb*inv(B)*b"], ["0", "inv(B)*A", "inv(B)", "inv(B)*b"]]
+    print(tabulate(ops, tablefmt="grid"))
+    numVars = int(input("\nIngrese la cantidad de variables de decisión del problema: "))
     numRest = int(input("Ingrese la cantidad de restricciones del problema: "))
     obj = input("¿Cuál es el objetivo de la función (Max - Min)?: ")
     return numVars, numRest, obj
