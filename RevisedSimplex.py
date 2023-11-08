@@ -97,11 +97,11 @@ def printEstandarModel(obj, estZ, estRest, typeRest):
     print(" ")
     for i in range(0, len(typeRest)):
         if typeRest[i] == ">=":
-            print("S" + str(i) + ": Variable de exceso.")
+            print("S" + str(i+1) + ": Variable de exceso.")
         if typeRest[i] == "<=":
-            print("S" + str(i) + ": Variable de holgura.")
+            print("S" + str(i+1) + ": Variable de holgura.")
         if typeRest[i] == "==":
-            print("S" + str(i) + ": Variable artificial.")
+            print("S" + str(i+1) + ": Variable artificial.")
 
 def getXandR(numVars, slackVars, artVars):
     X = []
@@ -149,9 +149,12 @@ def printIteration(ops):
     print("\n", tabulate(thisOps, tablefmt="grid"))
 
 def infoRequest():
-    print("\n- Cada variable, sea de holgura, exceso o artificial se añadirá a la ecuación con el prefijo S")
+    print("- El método admite restricciones de todo tipo (>=, <=, ==), también admite problemas de maximización o minimización, ")
+    print("hace la transformación en caso de tener un coeficiente negativo a la derecha, muestra la tabla de iteraciones")
+    print("y arroja un resultado para las variables básicas resultantes además del valor de Z según el caso.")
+    print("- Cada variable, sea de holgura, exceso o artificial se añadirá a la ecuación con el prefijo S")
     print("en el mismo orden que aparecen en las restricciones.")
-    print("- Si en algún momento la matriz B se vuelve tal qur no se pueda calcular su inversa")
+    print("- Si en algún momento la matriz B se vuelve tal que no se pueda cálcular su inversa")
     print("el programa términa su ejecución.")
     print("- En cada iteración, el programa mostrará una tabla con la siguiente estructura: \n")
     ops = [["1", "Cb*inv(B)*A-C", "Cb*inv(B)", "Cb*inv(B)*b"], ["0", "inv(B)*A", "inv(B)", "inv(B)*b"]]
